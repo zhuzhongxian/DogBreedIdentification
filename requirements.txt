@@ -4,3 +4,7 @@ aiomysql
 peewee-async
 WTForms
 WTForms-Tornado
+WTForms-json
+redis
+bcrypt
+pyjwt
