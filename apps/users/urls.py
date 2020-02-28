@@ -1,8 +1,8 @@
 from tornado.web import url
 from apps.users.handler import EmailCodeHandler,RegisterHandler,LoginHandler
 
-urlpatten = (
+urlpattern = (
     url("/code/", EmailCodeHandler),
     url("/register/",RegisterHandler),
-    url("/login/",LoginHandler)
+    url("/login/",LoginHandler),
 )

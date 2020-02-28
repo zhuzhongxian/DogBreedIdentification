@@ -1,5 +1,6 @@
 from apps.users import urls as user_urls
+from apps.search import urls as search_urls
+urlpattern = []
 
-urlpatten = []
-
-urlpatten += user_urls.urlpatten
+urlpattern += user_urls.urlpattern
+urlpattern += search_urls.urlpattern

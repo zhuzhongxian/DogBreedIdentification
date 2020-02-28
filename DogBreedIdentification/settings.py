@@ -5,6 +5,7 @@ settings = {
     "static_url_prefix" : "",
     "template_path" : "",
     "secret_key" : "zXg&z50C3RGRsLy$",
+    "jwt_expire" : 7 * 24 * 3600,
     "db" : {
         "host" : "127.0.0.1",
         "user" : "root",
