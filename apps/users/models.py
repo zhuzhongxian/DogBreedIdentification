@@ -41,10 +41,10 @@ GENDERS = (
 )
 
 class User(BaseModel):
-    email = CharField(max_length=320, verbose_name="邮箱地址", unique=True, index=True)
-    password = PasswordField(verbose_name="密码")
-    nick_name = CharField(max_length=20, null=True, verbose_name="昵称")
-    head_url = CharField(max_length=200, null=True, verbose_name="头像")
-    desc = TextField(null=True, verbose_name="个人简介")
-    gender = CharField(max_length=20, choices=GENDERS, null=True, verbose_name="性别")
+    Email = CharField(max_length=320, verbose_name="邮箱地址", unique=True, index=True)
+    Password = PasswordField(verbose_name="密码")
+    NickName = CharField(max_length=20, null=True, verbose_name="昵称")
+    HeadUrl = CharField(max_length=200, null=True, verbose_name="头像")
+    Desc = TextField(null=True, verbose_name="个人简介")
+    Gender = CharField(max_length=20, choices=GENDERS, null=True, verbose_name="性别")
 

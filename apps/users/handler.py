@@ -54,11 +54,11 @@ class RegisterHandler(RedisHandler):
                 re_data["code"] = "验证码错误或者失效"
             else:
                 try:
-                    existed_user = await self.application.objects.get(User,email=email)
+                    existed_user = await self.application.objects.get(User,Email=email)
                     self.set_status(400)
                     re_data["email"] = "该邮箱已注册"
                 except User.DoesNotExist as e:
-                    user = await self.application.objects.create(User,email=email,password=password)
+                    user = await self.application.objects.create(User,Email=email,Password=password)
                     re_data["id"] = user.id
         else:
             self.set_status(400)
@@ -80,22 +80,22 @@ class LoginHandler(RedisHandler):
             password = form.password.data
 
             try:
-                user = await self.application.objects.get(User, email=email)
-                if not user.password.check_password(password):
+                user = await self.application.objects.get(User, Email=email)
+                if not user.Password.check_password(password):
                     self.set_status(400)
                     re_data["non_fields"] = "用户名或密码错误"
                 else: # login success and write info into jwt
                     payload = {
                         "id" : user.id,
-                        "nick_name" : user.nick_name,
+                        "nick_name" : user.NickName,
                         "exp" : datetime.utcnow()
                     }
                     token = jwt.encode(payload, self.settings["secret_key"], algorithm='HS256')
                     re_data["id"] = user.id
-                    if user.nick_name is not None:
-                        re_data["nick_name"] = user.nick_name
+                    if user.NickName is not None:
+                        re_data["nick_name"] = user.NickName
                     else:
-                        re_data["nick_name"] = user.email
+                        re_data["nick_name"] = user.Email
                     re_data["token"] = token.decode("utf-8")
 
             except User.DoesNotExist as e:

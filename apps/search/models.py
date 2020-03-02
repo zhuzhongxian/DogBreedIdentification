@@ -21,6 +21,26 @@ class DogBreed(BaseModel):
     FollowerNum = IntegerField(default=0, verbose_name="关注")
     PostNum = IntegerField(default=0, verbose_name="帖子数")
 
-class DogFollower(BaseModel):
-    user = ForeignKeyField(User,verbose_name="用户")
+class DogFollower(BaseModel): #uncompleted
+    User = ForeignKeyField(User,verbose_name="用户")
     Breed = ForeignKeyField(DogBreed,verbose_name="狗的品种")
+
+class Post(BaseModel):
+    User = ForeignKeyField(User, verbose_name="用户")
+    Breed = ForeignKeyField(DogBreed, verbose_name="种类")
+    CommentNum = IntegerField(default=0, verbose_name="评论数")
+    Content = TextField(verbose_name="内容")
+
+class PostComment(BaseModel):
+    User = ForeignKeyField(User,verbose_name="用户",related_name="author")
+    Post = ForeignKeyField(Post,verbose_name="帖子")
+    ParentComment = ForeignKeyField('self',null=True,verbose_name="评论",related_name="comments_parent")
+    ReplyUser = ForeignKeyField(User,verbose_name="用户",related_name="replyed_author",null=True)
+    Context = CharField(max_length=1000,verbose_name="内容")
+    ReplyNum = IntegerField(default=0,verbose_name="回复数")
+    LikeNum = IntegerField(default=0,verbose_name="点赞数")
+
+class CommentLike(BaseModel):
+    User = ForeignKeyField(User,verbose_name="用户")
+    PostComment = ForeignKeyField(PostComment,verbose_name="帖子")
+
