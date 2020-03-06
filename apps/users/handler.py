@@ -85,6 +85,7 @@ class LoginHandler(RedisHandler):
                     self.set_status(400)
                     re_data["non_fields"] = "用户名或密码错误"
                 else: # login success and write info into jwt
+
                     payload = {
                         "id" : user.id,
                         "nick_name" : user.NickName,

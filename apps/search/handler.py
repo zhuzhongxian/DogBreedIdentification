@@ -3,9 +3,9 @@ import json
 from playhouse.shortcuts import model_to_dict
 
 from DogBreedIdentification.handler import RedisHandler
-from apps.search.forms import PostForm
+from apps.search.forms import BreedCommentForm
 from apps.utils.re_decorators import authenticated_async
-from apps.search.models import DogBreed,Post
+from apps.search.models import DogBreed,BreedComment,CommentLike
 from apps.utils.util_func import json_serial
 
 
@@ -48,34 +48,33 @@ class BreedDetailHandler(RedisHandler):
 
         self.finish(json.dumps(re_data,default=json_serial))
 
-class PostHandler(RedisHandler):
+class BreedCommentHandler(RedisHandler):
     @authenticated_async
     async def get(self, breed_id, *args, **kwargs):
-        # get post in the breed
+
         pass
-
     @authenticated_async
-    async def post(self, breed_id, *args, **kwargs):
+    async def post(self, breed_id, *args, **kwargs): #add comments
         re_data = {}
+        param = self.request.body.decode("utf-8")
+        param = json.loads(param)
+        form = BreedCommentForm.from_json(param)
+        if form.validate():
+            try:
+                breed = await self.application.objects.get(DogBreed, DogIdentifier = breed_id)
+                breed_comment = await self.application.objects.create(BreedComment, User = self.current_user,
+                                                                      Breed = breed, Context = form.context.data)
+                re_data["id"] = breed_id
+                re_data["user"] = {}
+                re_data["user"]["nick_name"] = self.current_user.NickName
+                re_data["user"]["id"] = self.current_user.id
+            except DogBreed.DoesNotExist as e:
+                self.set_status(404)
+        else:
+            self.set_status(400)
+            for field in form.errors:
+                re_data[field] = form.errors[field][0]
 
-        try:
-            breed = await self.application.objects.get(DogBreed, DogIdentifier = int(breed_id))
-
-            param = self.request.body.decode("utf-8")
-            param = json.loads(param)
-            form = PostForm.from_json(param)
-            if form .validate():
-                post = await self.application.objects.create(Post, User = self.current_user,
-                                                             Content = form.content.data, Breed = breed)
-                print(post)
-                print(self.current_user)
-                re_data["id"] = post.id
-            else:
-                self.set_status(400)
-                for field in form.errors:
-                    re_data[field] = form.errors[field][0]
-        except DogBreed.DoesNotExist as e:
-            self.set_status(404)
 
         self.finish(re_data)
 

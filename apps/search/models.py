@@ -25,22 +25,24 @@ class DogFollower(BaseModel): #uncompleted
     User = ForeignKeyField(User,verbose_name="用户")
     Breed = ForeignKeyField(DogBreed,verbose_name="狗的品种")
 
-class Post(BaseModel):
-    User = ForeignKeyField(User, verbose_name="用户")
-    Breed = ForeignKeyField(DogBreed, verbose_name="种类")
-    CommentNum = IntegerField(default=0, verbose_name="评论数")
-    Content = TextField(verbose_name="内容")
-
-class PostComment(BaseModel):
+class BreedComment(BaseModel):
     User = ForeignKeyField(User,verbose_name="用户",related_name="author")
-    Post = ForeignKeyField(Post,verbose_name="帖子")
+    Breed = ForeignKeyField(DogBreed,verbose_name="种类")
     ParentComment = ForeignKeyField('self',null=True,verbose_name="评论",related_name="comments_parent")
     ReplyUser = ForeignKeyField(User,verbose_name="用户",related_name="replyed_author",null=True)
     Context = CharField(max_length=1000,verbose_name="内容")
     ReplyNum = IntegerField(default=0,verbose_name="回复数")
     LikeNum = IntegerField(default=0,verbose_name="点赞数")
 
+    @classmethod
+    def extend(cls):
+        author = User.alias()
+        relyed_user = User.alias() #multi table
+        return cls.select(cls, DogBreed, relyed_user.id, relyed_user.NickName, author.id, author.NickName).join(
+            DogBreed, join_type=JOIN.LEFT_OUTER, on=cls.Breed).switch(cls).join(author, join_type=JOIN.LEFT_OUTER, on=cls.User).switch(cls).join(
+            relyed_user, join_type=JOIN.LEFT_OUTER, on=cls.ReplyUser)
+
 class CommentLike(BaseModel):
     User = ForeignKeyField(User,verbose_name="用户")
-    PostComment = ForeignKeyField(PostComment,verbose_name="帖子")
+    BreedComment = ForeignKeyField(BreedComment,verbose_name="评论")
 

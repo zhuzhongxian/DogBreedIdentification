@@ -22,8 +22,11 @@ def authenticated_async(method):
                 send_data = jwt.decode(token, self.settings["secret_key"],
                                        leeway=self.settings["jwt_expire"],options={"verify_exp" : True})
                 user_id = send_data["id"]
+                #user_nick_name = send_data["nick_name"]
                 try:
                     user = await self.application.objects.get(User, id=user_id)
+                    #if not user['NickName']:
+                        #user['NickName'] = user['Email']
                     self._current_user = user
                     # function
                     await method(self, *args, **kwargs)
