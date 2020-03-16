@@ -11,4 +11,4 @@ database = MySQLDatabase("dogbreedidentification", host="127.0.0.1", port=3306, 
 if __name__ == '__main__':
     #database.create_tables([User])
     #database.create_tables([DogFollower])
-    database.create_tables([CommentLike])
+    database.create_tables([DogBreed])

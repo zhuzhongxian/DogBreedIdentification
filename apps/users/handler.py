@@ -58,7 +58,7 @@ class RegisterHandler(RedisHandler):
                     self.set_status(400)
                     re_data["email"] = "该邮箱已注册"
                 except User.DoesNotExist as e:
-                    user = await self.application.objects.create(User,Email=email,Password=password)
+                    user = await self.application.objects.create(User,Email=email,Password=password,NickName=email)
                     re_data["id"] = user.id
         else:
             self.set_status(400)
