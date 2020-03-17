@@ -11,6 +11,7 @@ from apps.utils.util_func import json_serial
 
 
 class BreedHandler(RedisHandler):
+
     async def get(self, *args, **wkargs):
         re_data = []
         dog_breed_query = DogBreed.select()
@@ -35,6 +36,7 @@ class BreedHandler(RedisHandler):
         #token = self.request.headers.get("token",None)
 
 class BreedDetailHandler(RedisHandler):
+
     @authenticated_async
     async def get(self, breed_id, *args, **kwargs):
         # get breed detail
@@ -51,6 +53,7 @@ class BreedDetailHandler(RedisHandler):
         self.finish(json.dumps(re_data,default=json_serial))
 
 class BreedCommentHandler(RedisHandler):
+
     @authenticated_async
     async def get(self, breed_id, *args, **kwargs):
         # get comments
@@ -112,6 +115,7 @@ class BreedCommentHandler(RedisHandler):
         self.finish(re_data)
 
 class CommentReplyHandler(RedisHandler):
+
     @authenticated_async
     async def get(self, comment_id, *args, **kwargs):
         re_data = []
@@ -128,6 +132,7 @@ class CommentReplyHandler(RedisHandler):
             re_data.append(item_dict)
 
         self.finish(self.finish(json.dumps(re_data,default=json_serial)))
+
     @authenticated_async
     # add reply
     async def post(self, comment_id, *args, **kwargs):
@@ -163,6 +168,7 @@ class CommentReplyHandler(RedisHandler):
         self.finish(re_data)
 
 class CommentsLikeHandler(RedisHandler):
+
     @authenticated_async
     async def post(self,comment_id, *args, **kwargs):
         re_data = {}
