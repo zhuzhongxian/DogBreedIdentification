@@ -7,6 +7,7 @@ from apps.search.forms import BreedCommentForm,CommentReplyForm
 from apps.utils.re_decorators import authenticated_async
 from apps.search.models import DogBreed,BreedComment,CommentLike
 from apps.users.models import User
+from apps.message.models import Message
 from apps.utils.util_func import json_serial
 
 
@@ -155,7 +156,11 @@ class CommentReplyHandler(RedisHandler):
                     "id":self.current_user.id,
                     "nickname": self.current_user.NickName
                 }
-            except BreedComment.DoseNotExist as e:
+                # send message
+                await self.application.objects.create(Message, Sender=self.current_user, Receiver=replyed_user,
+                                                      MessageType=1, ParentContent=comment.Content,
+                                                      Message=form.content.data)
+            except BreedComment.DoesNotExist as e:
                 self.set_status(404)
             except User.DoesNotExist as e:
                 self.set_status(400)
@@ -180,6 +185,12 @@ class CommentsLikeHandler(RedisHandler):
             await self.application.objects.update(comment)
 
             re_data["id"] = comment_like.id
+
+            # send message
+            receiver = await self.application.objects.get(User, id=comment.User_id)
+            await self.application.objects.create(Message, Sender=self.current_user, Receiver=receiver,
+                                            MessageType=2, ParentContent=comment.Content,
+                                            Message="")
 
         except BreedComment.DoesNotExist as e:
             self.set_status(404)

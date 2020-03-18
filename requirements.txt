@@ -25,3 +25,6 @@ api
 评论              POST/GET     /breeds/([0-9]+)/comments/     {"content":""}
 回复评论          POST/GET     /comments/([0-9]+)/replys/      {"replyed_user":"","content":""}
 对评论点赞         POST         /comments/([0-9]+)/likes/
+
+########message#####
+获取消息     GET       /messages/

@@ -3,9 +3,7 @@ from random import choice
 from datetime import datetime
 import uuid
 import os
-#from functools import partial
 
-from tornado.web import RequestHandler
 import jwt
 import aiofiles
 
