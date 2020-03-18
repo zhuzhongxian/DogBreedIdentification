@@ -10,6 +10,7 @@ import aiofiles
 from apps.utils.re_decorators import authenticated_async
 from apps.users.forms import EmailCodeForm,RegisterForm,LoginForm,ProfileForm,ChangePasswordForm
 from apps.users.models import User
+from apps.search.models import DogBreed,DogFollower
 from DogBreedIdentification.handler import RedisHandler
 
 
@@ -196,3 +197,21 @@ class ChangePasswordHandler(RedisHandler):
                 re_data[field] = password_form.errors[field][0]
 
         self.finish(re_data)
+
+class FollowsHandler(RedisHandler):
+    # get follow information
+    @authenticated_async
+    async def get(self, *args, **kwargs):
+        re_data = []
+        follows = await self.application.objects.execute(DogFollower.select().where(DogFollower.User_id==self.current_user.id))
+        for follow in follows:
+            breed = await self.application.objects.get(DogBreed, DogIdentifier=follow.Breed_id)
+            re_data.append({
+                "id": breed.id,
+                "dog_name": breed.DogName,
+                "dog_image": "/media/" + breed.DogImage,
+                "desc": breed.DogDesc,
+                "add_time": follow.add_time.strftime("%Y-%m-%d %H:%M:%S")
+            })
+
+        self.finish(json.dumps(re_data))

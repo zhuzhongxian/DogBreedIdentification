@@ -5,7 +5,7 @@ from playhouse.shortcuts import model_to_dict
 from DogBreedIdentification.handler import RedisHandler
 from apps.search.forms import BreedCommentForm,CommentReplyForm
 from apps.utils.re_decorators import authenticated_async
-from apps.search.models import DogBreed,BreedComment,CommentLike
+from apps.search.models import DogBreed,BreedComment,CommentLike,DogFollower
 from apps.users.models import User
 from apps.message.models import Message
 from apps.utils.util_func import json_serial
@@ -180,7 +180,7 @@ class CommentsLikeHandler(RedisHandler):
         try:
             comment = await self.application.objects.get(BreedComment, id=int(comment_id))
             comment_like= await self.application.objects.create(CommentLike, User=self.current_user,BreedComment=comment)
-
+            # update number
             comment.LikeNum += 1
             await self.application.objects.update(comment)
 
@@ -196,4 +196,23 @@ class CommentsLikeHandler(RedisHandler):
             self.set_status(404)
 
         self.finish(re_data)
+
+class BreedFollowHandler(RedisHandler):
+    # user follow breed
+    @authenticated_async
+    async def post(self, breed_id, *args, **kwargs):
+        try:
+            re_data = {}
+            breed = await self.application.objects.get(DogBreed, id=int(breed_id))
+            follow = await self.application.objects.create(DogFollower,User=self.current_user.id,Breed=breed)
+            re_data["id"] = follow.id
+            # update number
+            breed.FollowerNum += 1
+            await self.application.objects.update(breed)
+
+        except DogBreed.DoesNotExist as e:
+            self.set_status(404)
+
+        self.finish(re_data)
+
 

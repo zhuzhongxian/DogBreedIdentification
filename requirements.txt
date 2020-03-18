@@ -12,19 +12,29 @@ aiofile
 
 api
 #######user#######
-获取邮箱验证码 GET        /code/            {"email":""}
+获取邮箱验证码 POST        /code/            {"email":""}
 注册账号      POST       /register/        {"email":"","code":}
 登录         POST       /login/            {"email":"","code":,"password":""}
-个人信息     POST/GET   /info/             {"nick_name":"","gender":"","desc":""}
+个人信息     PATCH/GET   /info/             {"nick_name":"","gender":"","desc":""}
 修改头像信息  POST/GET    /headimage/       {"image":""}
 修改密码      POST       /password/         {"old_password":"","old_password":"","confirm_password":""}
+获取关注种类  GET         /follows/
 
 #######search######
 获取热搜种类       GET           /breeds/
 获取某种类详细信息  GET          /breeds/([0-9]+)/
 评论              POST/GET     /breeds/([0-9]+)/comments/     {"content":""}
+对种类关注         POST         /breeds/([0-9]+)/follow/
 回复评论          POST/GET     /comments/([0-9]+)/replys/      {"replyed_user":"","content":""}
 对评论点赞         POST         /comments/([0-9]+)/likes/
 
+
 ########message#####
 获取消息     GET       /messages/
+
+#######admin#######
+管理员登录
+获取所有的账号     GET     /accounts/admin/
+获取所有种类       GET     /breeds/admin/
+获取所有评论       GET     /comments/admin/
+删除评论          DELETE   /comments/([0-9]+)/manage/
