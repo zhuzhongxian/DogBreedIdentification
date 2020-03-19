@@ -34,7 +34,10 @@ api
 
 #######admin#######
 管理员登录
-获取所有的账号     GET     /accounts/admin/
-获取所有种类       GET     /breeds/admin/
-获取所有评论       GET     /comments/admin/
-删除评论          DELETE   /comments/([0-9]+)/manage/
+获取所有的账号     GET             /accounts/admin/
+管理账号信息       DELETE/POST     /accounts/([0-9]+)/manage/
+获取所有种类       GET            /breeds/admin/
+管理种类的文本信息  GET/PATCH      /breeds/([0-9]+)/manage/
+管理封面图像       GET/POST       /breeds/([0-9]+)/image/
+获取所有评论       GET            /comments/admin/
+删除评论           DELETE        /comments/([0-9]+)/manage/
