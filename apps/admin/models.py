@@ -4,7 +4,7 @@ from DogBreedIdentification.models import BaseModel
 
 
 class Admin(BaseModel):
-    Username = CharField(max_length=320, verbose_name="用户名", unique=True, index=True, default='admin')
+    UserName = CharField(max_length=320, verbose_name="用户名", unique=True, index=True, default='admin')
     Password = CharField(verbose_name='密码', max_length=20, null=False, default='admin')
 
 OPERATION_TYPE = (

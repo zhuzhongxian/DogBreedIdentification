@@ -9,6 +9,7 @@ redis
 bcrypt
 pyjwt
 aiofile
+aiosmtplib
 
 api
 #######user#######
@@ -33,7 +34,7 @@ api
 获取消息     GET       /messages/
 
 #######admin#######
-管理员登录
+管理员登录        POST             /
 获取所有的账号     GET             /accounts/admin/
 管理账号信息       DELETE/POST     /accounts/([0-9]+)/manage/
 获取所有种类       GET            /breeds/admin/

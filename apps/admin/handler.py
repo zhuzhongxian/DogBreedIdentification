@@ -4,14 +4,34 @@ import os
 import aiofiles
 
 from DogBreedIdentification.handler import RedisHandler
-from apps.admin.forms import ChangePasswordForm,ChangeBreedForm
+from apps.admin.forms import AdminLoginForm,ChangePasswordForm,ChangeBreedForm
 from apps.users.models import User
 from apps.search.models import DogBreed,BreedComment
-from apps.admin.models import AdminLog
+from apps.admin.models import AdminLog,Admin
 
 
 class AdminLoginHandler(RedisHandler):
-    pass
+    # admin login
+    async def post(self, *args, **kwargs):
+        re_data = {}
+        param = self.request.body.decode("utf-8")
+        param = json.loads(param)
+        form = AdminLoginForm.json_from(param)
+        if form.validate():
+            username = form.username.data
+            password = form.password.data
+            try:
+                admin = await self.application.objects.get(Admin,UserName=username)
+                if password != admin.Password:
+                    re_data["non_fields"] = "账号或密码错误"
+                else:
+                    # success
+                    pass
+            except Admin.DoesNotExist as e:
+                self.set_status(404)
+                re_data["username"] = "管理员不存在"
+
+        self.finish(re_data)
 
 class AdminAccountsHandler(RedisHandler):
     # get all accounts

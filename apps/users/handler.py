@@ -3,9 +3,13 @@ from random import choice
 from datetime import datetime
 import uuid
 import os
+from email.mime.text import MIMEText
+from email.utils import formataddr
 
 import jwt
 import aiofiles
+import aiosmtplib
+
 
 from apps.utils.re_decorators import authenticated_async
 from apps.users.forms import EmailCodeForm,RegisterForm,LoginForm,ProfileForm,ChangePasswordForm
@@ -31,7 +35,25 @@ class EmailCodeHandler(RedisHandler):
             email = email_form.email.data
             #write code into redis
             code = self.generate_code()
+
             print(code,email)
+
+            #### send code
+            my_user = email
+            code =code
+            my_sender = '546397335@qq.com'
+            my_pass = 'azbftecmmszbbcea'
+            msg = MIMEText("验证码:" + code, 'plain', 'utf-8')
+            msg['From'] = formataddr(["zzx", my_sender])
+            msg['To'] = formataddr(["尊敬的用户", my_user])
+            msg['Subject'] = "注册邮箱验证"
+            try:
+                async with aiosmtplib.SMTP(hostname="smtp.qq.com", port=465, use_tls=True) as smtp:
+                    await smtp.login(my_sender, my_pass)
+                    await smtp.send_message(msg)
+            except aiosmtplib.SMTPException as e:
+                pass
+            ####
             self.redis_conn.set("{}_{}".format(email, code), 1, 10 * 60)
         else:
             self.set_status(400)

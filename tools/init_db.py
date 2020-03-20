@@ -16,4 +16,4 @@ if __name__ == '__main__':
     #database.create_tables([DogBreed])
     #database.create_tables([Message])
     #database.create_tables([Admin])
-    database.create_tables([AdminLog])
+    database.create_tables([Admin])

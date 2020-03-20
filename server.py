@@ -2,6 +2,7 @@ from tornado import web
 import tornado
 from peewee_async import Manager
 
+
 from DogBreedIdentification.urls import urlpattern
 from DogBreedIdentification.settings import settings,database
 
@@ -16,5 +17,7 @@ if __name__ == "__main__":
     objects = Manager(database)
     database.set_allow_sync(False) # No need for sync anymore
     app.objects = objects
+
+
 
     tornado.ioloop.IOLoop.current().start()
