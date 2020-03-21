@@ -23,7 +23,7 @@ class MessageHandler(RedisHandler):
                 "sender" : {
                     "id":sender.id,
                     "nick_name":sender.NickName,
-                    "head_url":"/media/"+sender.HeadUrl
+                    "head_url":"media/"+sender.HeadUrl
                 },
                 "message":message.Message,
                 "message_type":message.MessageType,

@@ -165,7 +165,7 @@ class HeadImageHandler(RedisHandler):
     @authenticated_async
     async def get(self, *args, **kwargs):
         self.finish({
-            "image":"/media/" + self.current_user.HeadUrl
+            "image":"media/" + self.current_user.HeadUrl
         })
 
     @authenticated_async

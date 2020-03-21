@@ -61,10 +61,11 @@ class BreedCommentHandler(RedisHandler):
         re_data = []
         try:
             breed = await self.application.objects.get(DogBreed, DogIdentifier = int(breed_id))
-            breed_comments = await self.application.objects.execute(BreedComment.select(BreedComment, User.id,User.NickName).join(User, on=(User.id == BreedComment.User_id)).where(BreedComment.Breed_id == breed,BreedComment.ParentComment.is_null(True)).order_by(BreedComment.add_time.desc()))
+            breed_comments = await self.application.objects.execute(BreedComment.select(BreedComment, User.id,User.NickName,User.HeadUrl).join(User, on=(User.id == BreedComment.User_id)).where(BreedComment.Breed_id == breed,BreedComment.ParentComment.is_null(True)).order_by(BreedComment.add_time.desc()))
 
             for item in breed_comments:
                 print(item.User.NickName)
+                item.User.HeadUrl = "{}/media/{}".format(self.settings["SITE_URL"], item.User.HeadUrl)
                 has_liked = False
                 try:
                     comments_like = await self.application.objects.get(CommentLike, BreedComment_id=item.id,
@@ -76,6 +77,7 @@ class BreedCommentHandler(RedisHandler):
 
                 item_dict = {
                     "user" : model_to_dict(item.User),
+                    "add_time": item.add_time,
                     "content" : item.Content,
                     "reply_nums" : item.ReplyNum,
                     "like_num" : item.LikeNum,
