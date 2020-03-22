@@ -122,7 +122,7 @@ class LoginHandler(RedisHandler):
                         re_data["nick_name"] = user.NickName
                     else:
                         re_data["nick_name"] = user.Email
-                    re_data["token"] = token.decode("utf-8")
+                    re_data["token"] = token.decode("utf8")
 
             except User.DoesNotExist as e:
                 self.set_status(400)
@@ -231,7 +231,7 @@ class FollowsHandler(RedisHandler):
             re_data.append({
                 "id": breed.id,
                 "dog_name": breed.DogName,
-                "dog_image": "/media/" + breed.DogImage,
+                "dog_image": "{}/media/{}".format(self.settings["SITE_URL"],breed.DogImage),
                 "desc": breed.DogDesc,
                 "add_time": follow.add_time.strftime("%Y-%m-%d %H:%M:%S")
             })

@@ -16,7 +16,7 @@ def authenticated_async(method):
 
     @functools.wraps(method)
     async def wrapper(self, *args, **kwargs):
-        token = self.request.headers.get("token",None)
+        token = self.request.headers.get("tesssionid",None)
         if token:
             try:
                 send_data = jwt.decode(token, self.settings["secret_key"],

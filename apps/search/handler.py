@@ -122,11 +122,16 @@ class CommentReplyHandler(RedisHandler):
     @authenticated_async
     async def get(self, comment_id, *args, **kwargs):
         re_data = []
-        comment_replys = await self.application.objects.execute(BreedComment.select(BreedComment,User.id,User.NickName).join(User,on=User.id==BreedComment.User_id).where(BreedComment.ParentComment_id==int(comment_id)))
+        comment_replys = await self.application.objects.execute(BreedComment.select(BreedComment,User.id,User.NickName,User.HeadUrl).join(User,on=User.id==BreedComment.User_id).where(BreedComment.ParentComment_id==int(comment_id)))
 
         for item in comment_replys:
             item_dict = {
-                "user":model_to_dict(item.User),
+                #"user":model_to_dict(item.User),
+                "user":{
+                  "id":  item.User.id,
+                  "nick_name":item.User.NickName,
+                  "head_url":"{}/media/{}".format(self.settings["SITE_URL"], item.User.HeadUrl)
+                },
                 "content":item.Content,
                 "reply_num":item.ReplyNum,
                 "add_time":item.add_time.strftime("%Y-%m-%d"),
@@ -214,6 +219,8 @@ class BreedFollowHandler(RedisHandler):
 
         except DogBreed.DoesNotExist as e:
             self.set_status(404)
+        except DogFollower.Exception:
+            self.set_status(500)
 
         self.finish(re_data)
 
