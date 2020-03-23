@@ -1,7 +1,7 @@
 from tornado.web import url
 
 from apps.admin.handler import AdminLoginHandler,AdminAccountsHandler,AdminBreedsHandler\
-    ,AdminCommentsHandler,ManageCommentsHandler,ManageAccountsHandler,ManageBreedsHandler,ManageImageHandler
+    ,AdminCommentsHandler,ManageCommentsHandler,ManageAccountsHandler,ManageBreedsHandler,ManageImageHandler,LogsHandler
 
 urlpattern = (
     url("/admin/login/",AdminLoginHandler),
@@ -12,4 +12,5 @@ urlpattern = (
     url("/breeds/([0-9]+)/image/",ManageImageHandler),
     url("/comments/admin/",AdminCommentsHandler),
     url("/comments/([0-9]+)/manage/",ManageCommentsHandler),
+    url("/logs/",LogsHandler),
 )

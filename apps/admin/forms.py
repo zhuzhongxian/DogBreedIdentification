@@ -12,6 +12,7 @@ class ChangePasswordForm(Form):
     confirm_password = StringField("确认密码", validators=[DataRequired("请输入确认密码")])
 
 class ChangeBreedForm(Form):
+    dog_identifier = StringField("品种标识符")
     dog_name = StringField("品种名称")
     dog_alias = StringField("别名")
     dog_eng_name = StringField("英文名")

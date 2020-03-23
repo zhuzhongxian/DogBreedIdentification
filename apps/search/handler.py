@@ -88,7 +88,7 @@ class BreedCommentHandler(RedisHandler):
                 re_data.append(item_dict)
         except BreedComment.DoesNotExist as e:
             self.set_status(404)
-        self.finish(self.finish(json.dumps(re_data, default=json_serial)))
+        self.finish(json.dumps(re_data, default=json_serial))
 
     @authenticated_async
     async def post(self, breed_id, *args, **kwargs): #add comments

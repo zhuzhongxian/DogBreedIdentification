@@ -8,6 +8,7 @@ from apps.admin.forms import AdminLoginForm,ChangePasswordForm,ChangeBreedForm
 from apps.users.models import User
 from apps.search.models import DogBreed,BreedComment
 from apps.admin.models import AdminLog,Admin
+from apps.utils.util_func import json_serial
 
 
 class AdminLoginHandler(RedisHandler):
@@ -16,7 +17,7 @@ class AdminLoginHandler(RedisHandler):
         re_data = {}
         param = self.request.body.decode("utf-8")
         param = json.loads(param)
-        form = AdminLoginForm.json_from(param)
+        form = AdminLoginForm.from_json(param)
         if form.validate():
             username = form.username.data
             password = form.password.data
@@ -25,8 +26,10 @@ class AdminLoginHandler(RedisHandler):
                 if password != admin.Password:
                     re_data["non_fields"] = "账号或密码错误"
                 else:
-                    # success
-                    pass
+                    re_data["id"]=admin.id
+                    re_data["username"]=username
+                    self.redis_conn.set("{}_{}".format(admin, username), 1, 7 * 24 * 3600)
+                    re_data["token"]="{}_{}".format(admin, username)
             except Admin.DoesNotExist as e:
                 self.set_status(404)
                 re_data["username"] = "管理员不存在"
@@ -51,7 +54,6 @@ class ManageAccountsHandler(RedisHandler):
     # change password
     async def post(self, user_id, *args, **kwargs):
         re_data = {}
-
         param = self.request.body.decode("utf-8")
         param = json.loads(param)
         form = ChangePasswordForm.from_json(param)
@@ -61,7 +63,6 @@ class ManageAccountsHandler(RedisHandler):
             else:
                 try:
                     user = await self.application.objects.get(User, id=user_id)
-                    print(user.Password)
                     user.Password = form.new_password.data
                     await self.application.objects.update(user)
                     await self.application.objects.create(AdminLog, Admin=1, OperationType=1)
@@ -93,7 +94,8 @@ class AdminBreedsHandler(RedisHandler):
             re_data.append({
                 "id":breed.id,
                 "dog_name":breed.DogName,
-                "dog_origin":breed.DogOrigin
+                "dog_origin":breed.DogOrigin,
+                "dog_image":"{}/media/{}".format(self.settings["SITE_URL"],breed.DogImage)
             })
         self.finish(json.dumps(re_data))
 
@@ -103,6 +105,7 @@ class ManageBreedsHandler(RedisHandler):
         try:
             breed = await self.application.objects.get(DogBreed, DogIdentifier=breed_id)
             re_data = {
+                "dog_id": breed.id,
                 "dog_identifier": breed.DogIdentifier,
                 "dog_name": breed.DogName,
                 "dog_alias": breed.DogAlias,
@@ -112,7 +115,7 @@ class ManageBreedsHandler(RedisHandler):
                 "dog_hight": breed.DogHight,
                 "dog_life_span": breed.DogLifeSpan,
                 "dog_price": breed.DogPrice,
-                "dog_image": "/media/" + breed.DogImage,
+                #"dog_image": "/media/" + breed.DogImage,
                 "dog_desc": breed.DogDesc
             }
         except DogBreed.DoesNotExist as e:
@@ -129,6 +132,8 @@ class ManageBreedsHandler(RedisHandler):
         if form.validate():
             try:
                 breed = await self.application.objects.get(DogBreed, DogIdentifier=breed_id)
+                iden = int(form.dog_identifier.data)
+                breed.DogIdentifier = iden
                 breed.DogName = form.dog_name.data
                 breed.DogAlias = form.dog_alias.data
                 breed.DogEngName = form.dog_eng_name.data
@@ -189,17 +194,19 @@ class AdminCommentsHandler(RedisHandler):
     # get all comments
     async def get(self, *args, **kwargs):
         re_data = []
-        comments = await self.application.objects.execute(BreedComment.select().where(BreedComment.ParentComment.is_null(True)))
+        comments = await self.application.objects.execute(BreedComment.select().where(BreedComment.ParentComment.is_null(True)).order_by(BreedComment.add_time.desc()))
         for comment in comments:
+
             user = await self.application.objects.get(User,id=comment.User_id)
             breed = await self.application.objects.get(DogBreed,id=comment.Breed_id)
             re_data.append({
                 "id":comment.id,
                 "nick_name": user.NickName,
                 "dog_name": breed.DogName,
-                "content":comment.Content
+                "content":comment.Content,
+                "add_time":comment.add_time
             })
-        self.finish(json.dumps(re_data))
+        self.finish(json.dumps(re_data, default=json_serial))
 
 class ManageCommentsHandler(RedisHandler):
     # manage comments
@@ -214,3 +221,18 @@ class ManageCommentsHandler(RedisHandler):
             self.set_status(404)
 
         self.finish(re_data)
+
+class LogsHandler(RedisHandler):
+    # show log
+    async def get(self, *args, **kwargs):
+        re_data = []
+        logs = await self.application.objects.execute(AdminLog.select().order_by(AdminLog.add_time.desc()))
+        for log in logs:
+            re_data.append({
+                "id":log.id,
+                "admin_id":log.Admin_id,
+                "add_time":log.add_time,
+                "operation_type":log.OperationType
+            })
+
+        self.finish(json.dumps(re_data, default=json_serial))
