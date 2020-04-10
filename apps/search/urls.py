@@ -1,7 +1,9 @@
 from tornado.web import url
-from apps.search.handler import BreedHandler,BreedDetailHandler,BreedCommentHandler,CommentReplyHandler,CommentsLikeHandler,BreedFollowHandler
+from apps.search.handler import BreedHandler,BreedDetailHandler,BreedCommentHandler,CommentReplyHandler,CommentsLikeHandler,BreedFollowHandler,SearchHandler
 
 urlpattern = (
+    url("/search/", SearchHandler),
+
     url("/breeds/", BreedHandler),
     url("/breeds/([0-9]+)/",BreedDetailHandler),
 
