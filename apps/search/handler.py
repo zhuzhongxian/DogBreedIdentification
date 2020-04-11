@@ -30,6 +30,9 @@ class SearchHandler(RedisHandler):
         style=self.get_argument("style", None)
         # post image
         if(style=="image"):
+
+
+
             files_meta = self.request.files.get("image", None)
             if not files_meta:
                 self.set_status(400)
@@ -86,9 +89,15 @@ class SearchHandler(RedisHandler):
                     mod.forward(Batch([x]))
                     out = mod.get_outputs()
                     prob = out[0]
+                    print(prob)
                     predicted_labels = prob.argmax(axis=1)
-                    print(predicted_labels)
-
+                    ident = predicted_labels.asnumpy()
+                    # get infor from database
+                    breed = await self.application.objects.get(DogBreed, DogIdentifier = int(ident))
+                    breed.SearchNum += 1
+                    await self.application.objects.update(breed)
+                    re_data["identifier"] = breed.DogIdentifier
+                    re_data["name"] = breed.DogName
 
         # post text
         else:
@@ -107,18 +116,6 @@ class SearchHandler(RedisHandler):
 
 
         self.finish(re_data)
-
-
-                # new_filename = "{uuid}_{filename}".format(uuid=uuid.uuid1(), filename=filename)
-                # file_path = os.path.join(self.settings["MEDIA_ROOT"], new_filename)
-                # async with aiofiles.open(file_path, 'wb') as f:
-                #     await f.write(meta['body'])
-                #     re_data["image"] = "/media/" + new_filename
-
-                # self.current_user.HeadUrl = new_filename
-                # await self.application.objects.update(self.current_user)
-
-        #self.finish(re_data)
 
 class BreedHandler(RedisHandler):
 
