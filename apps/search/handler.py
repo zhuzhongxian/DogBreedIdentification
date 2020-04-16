@@ -46,9 +46,16 @@ class SearchHandler(RedisHandler):
                     img = meta['body']
                     img = np.frombuffer(img, np.uint8)  # 转成8位无符号整型
                     img = cv2.imdecode(img, cv2.IMREAD_COLOR)  #
-                    g = img[:, :, 1]
-                    b = img[:, :, 0]
-                    r = img[:, :, 2]
+
+
+                    # image perprocessing
+
+                    width = 299
+                    height = 299
+                    new_img = cv2.resize(img, (width, height))
+                    g = new_img[:, :, 1]
+                    b = new_img[:, :, 0]
+                    r = new_img[:, :, 2]
 
                     # 合成merge(mv, dst=None)
                     image = cv2.merge((r, g, b))
@@ -57,14 +64,8 @@ class SearchHandler(RedisHandler):
                     plt.axis('off')  # clear x- and y-axes
                     plt.show()
                     print(img.shape)
-
-                    # image perprocessing
-
-                    width = 299
-                    height = 299
-                    new_img = cv2.resize(img, (width, height))
                     X_299_test = nd.zeros((1, 3, 299, 299))
-                    X_299_test = mx.nd.array(new_img)
+                    X_299_test = mx.nd.array(image)
                     transformer = gdata.vision.transforms.ToTensor()
                     print(transformer(X_299_test))
                     data_test_iter_299 = gluon.data.DataLoader(gluon.data.ArrayDataset(transformer(X_299_test)),
@@ -228,15 +229,27 @@ class CommentReplyHandler(RedisHandler):
     @authenticated_async
     async def get(self, comment_id, *args, **kwargs):
         re_data = []
-        comment_replys = await self.application.objects.execute(BreedComment.select(BreedComment,User.id,User.NickName,User.HeadUrl).join(User,on=User.id==BreedComment.User_id).where(BreedComment.ParentComment_id==int(comment_id)))
+
+        #author = User.alias("author")
+        relyed_user = User.alias("relyed_user")
+        comment_replys = await self.application.objects.execute(
+            BreedComment.select(BreedComment,User.id,User.NickName,User.HeadUrl,relyed_user.id,relyed_user.NickName).join(User, on=User.id == BreedComment.User_id).join(relyed_user, on=relyed_user.id == BreedComment.ReplyUser_id).where(
+                BreedComment.ParentComment_id == int(comment_id)))
+        #comment_replys = await self.application.objects.execute(BreedComment.select(BreedComment, User.,relyed_user).join(author, on=(author.id==BreedComment.User_id )).join(relyed_user, on=(relyed_user.id==BreedComment.ReplyUser_id)).where(BreedComment.ParentComment_id == int(comment_id)))
+        #comment_replys = await self.application.objects.execute(BreedComment.select(BreedComment,author.id,author.NickName,author.HeadUrl,relyed_user.id,relyed_user.NickName).join(author,on=author.id==BreedComment.User_id).switch(BreedComment).join(relyed_user,on=relyed_user.id==BreedComment.ReplyUser_id).where(BreedComment.ParentComment_id==int(comment_id)))
 
         for item in comment_replys:
+            #print(item.author)
             item_dict = {
                 #"user":model_to_dict(item.User),
-                "user":{
+                "author":{
                   "id":  item.User.id,
                   "nick_name":item.User.NickName,
                   "head_url":"{}/media/{}".format(self.settings["SITE_URL"], item.User.HeadUrl)
+                },
+                "relyed_user":{
+                  "id":  item.User.id,
+                  "nick_name":item.User.NickName
                 },
                 "content":item.Content,
                 "reply_num":item.ReplyNum,
@@ -245,7 +258,7 @@ class CommentReplyHandler(RedisHandler):
             }
             re_data.append(item_dict)
 
-        self.finish(self.finish(json.dumps(re_data,default=json_serial)))
+        self.finish(json.dumps(re_data,default=json_serial))
 
     @authenticated_async
     # add reply
@@ -259,7 +272,7 @@ class CommentReplyHandler(RedisHandler):
                 comment = await self.application.objects.get(BreedComment, id=int(comment_id))
                 replyed_user = await self.application.objects.get(User, id=form.replyed_user.data)
                 reply = await self.application.objects.create(BreedComment, User=self.current_user, ParentComment=comment,
-                                                              ReplyedUser=replyed_user, Content=form.content.data)
+                                                              ReplyUser=replyed_user.id, Content=form.content.data)
 
                 # update reply number
                 comment.ReplyNum +=1
