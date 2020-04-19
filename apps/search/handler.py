@@ -21,6 +21,15 @@ from apps.users.models import User
 from apps.message.models import Message
 from apps.utils.util_func import json_serial
 
+from keras.models import Model, load_model, save_model
+from keras.layers import Input, Conv2D, MaxPooling2D, Dropout, BatchNormalization, Dense, GlobalAveragePooling2D
+import numpy as np
+from keras.utils.np_utils import to_categorical
+import matplotlib.pyplot as plt
+import cv2
+from glob import glob
+import random
+
 class SearchHandler(RedisHandler):
 
     @authenticated_async
@@ -48,53 +57,65 @@ class SearchHandler(RedisHandler):
                     img = cv2.imdecode(img, cv2.IMREAD_COLOR)  #
 
 
+
                     # image perprocessing
 
-                    width = 299
-                    height = 299
-                    new_img = cv2.resize(img, (width, height))
-                    g = new_img[:, :, 1]
-                    b = new_img[:, :, 0]
-                    r = new_img[:, :, 2]
+                    # width = 299
+                    # height = 299
+                    # new_img = cv2.resize(img, (width, height))
+                    # g = new_img[:, :, 1]
+                    # b = new_img[:, :, 0]
+                    # r = new_img[:, :, 2]
+                    #
+                    #
+                    # image = cv2.merge((r, g, b))
+                    #
+                    # plt.imshow(image)
+                    # plt.axis('off')
+                    # plt.show()
+                    # print(img.shape)
+                    # X_299_test = nd.zeros((1, 3, 299, 299))
+                    # X_299_test = mx.nd.array(image)
+                    # transformer = gdata.vision.transforms.ToTensor()
+                    # print(transformer(X_299_test))
+                    # data_test_iter_299 = gluon.data.DataLoader(gluon.data.ArrayDataset(transformer(X_299_test)),
+                    #                                            batch_size=128, last_batch='keep')
+                    # x = []
+                    # features = []
+                    # net1 = models.get_model('inceptionv3', pretrained=True)
+                    # for data_iter in data_test_iter_299:
+                    #     data_iter = data_iter.reshape(1, 3, 299, 299)
+                    #     print(data_iter)
+                    #     feature = net1.features(data_iter)
+                    #     print(feature)
+                    #     feature = gluon.nn.Flatten()(feature)
+                    #     features.append(feature.as_in_context(mx.cpu()))
+                    # x = nd.concat(*features, dim=0)
+                    # print(x)
+                    # symnet = mx.symbol.load('test-symbol.json')
+                    # mod = mx.mod.Module(symbol=symnet, context=mx.cpu())
+                    # mod.bind(data_shapes=[('data', (1, 2048))])
+                    # mod.load_params('test-0000.params')
+                    # Batch = namedtuple('Batch', ['data'])
+                    # mod.forward(Batch([x]))
+                    # out = mod.get_outputs()
+                    # prob = out[0]
+                    # print(prob)
+                    #predicted_labels = prob.argmax(axis=1)
+                    #ident = predicted_labels.asnumpy()
 
-                    # 合成merge(mv, dst=None)
-                    image = cv2.merge((r, g, b))
+                    ######### keras
+                    model = load_model('D:/PycharmProjects/Dog_Breed_Identification/apps/search/model1.h5')
+                    img = cv2.resize(img, (200, 200))
+                    model_input = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_BGR2RGB)
 
-                    plt.imshow(image)
-                    plt.axis('off')  # clear x- and y-axes
-                    plt.show()
-                    print(img.shape)
-                    X_299_test = nd.zeros((1, 3, 299, 299))
-                    X_299_test = mx.nd.array(image)
-                    transformer = gdata.vision.transforms.ToTensor()
-                    print(transformer(X_299_test))
-                    data_test_iter_299 = gluon.data.DataLoader(gluon.data.ArrayDataset(transformer(X_299_test)),
-                                                               batch_size=128, last_batch='keep')
-                    x = []
-                    features = []
-                    net1 = models.get_model('inceptionv3', pretrained=True)
-                    for data_iter in data_test_iter_299:
-                        data_iter = data_iter.reshape(1, 3, 299, 299)
-                        print(data_iter)
-                        feature = net1.features(data_iter)
-                        print(feature)
-                        feature = gluon.nn.Flatten()(feature)
-                        features.append(feature.as_in_context(mx.cpu()))
-                    x = nd.concat(*features, dim=0)
-                    print(x)
-                    symnet = mx.symbol.load('test-symbol.json')
-                    mod = mx.mod.Module(symbol=symnet, context=mx.cpu())
-                    mod.bind(data_shapes=[('data', (1, 2048))])
-                    mod.load_params('test-0000.params')
-                    Batch = namedtuple('Batch', ['data'])
-                    mod.forward(Batch([x]))
-                    out = mod.get_outputs()
-                    prob = out[0]
-                    print(prob)
-                    predicted_labels = prob.argmax(axis=1)
-                    ident = predicted_labels.asnumpy()
+                    pred = model.predict(np.reshape(model_input, [1, 200, 200, 3]))
+                    predicted_labels = pred.argmax(axis=1)
+                    print(predicted_labels[0])
+                    #ident = predicted_labels.asnumpy()
+                    #print(ident+1)
                     # get infor from database
-                    breed = await self.application.objects.get(DogBreed, DogIdentifier = int(ident))
+                    breed = await self.application.objects.get(DogBreed, DogIdentifier = int(predicted_labels[0]+1))
                     breed.SearchNum += 1
                     await self.application.objects.update(breed)
                     re_data["identifier"] = breed.DogIdentifier
@@ -149,6 +170,7 @@ class BreedDetailHandler(RedisHandler):
     async def get(self, breed_id, *args, **kwargs):
         # get breed detail
         re_data = {}
+
         try:
             breed = await self.application.objects.get(DogBreed, DogIdentifier = int(breed_id))
             breed_dict = model_to_dict(breed)
@@ -157,6 +179,7 @@ class BreedDetailHandler(RedisHandler):
 
         except DogBreed.DoseNotExist as e:
             self.set_status(404)
+
 
         self.finish(json.dumps(re_data,default=json_serial))
 
@@ -324,6 +347,19 @@ class CommentsLikeHandler(RedisHandler):
         self.finish(re_data)
 
 class BreedFollowHandler(RedisHandler):
+    # user get follow info
+    @authenticated_async
+    async def get(self, breed_id, *args, **kwargs):
+        try:
+            re_data = {}
+            follow = await self.application.objects.get(DogFollower, User_id=self.current_user.id, Breed_id=breed_id)
+            re_data["follow"] = "true"
+
+
+        except DogFollower.Exception:
+            self.set_status(500)
+
+        self.finish(re_data)
     # user follow breed
     @authenticated_async
     async def post(self, breed_id, *args, **kwargs):
@@ -343,4 +379,65 @@ class BreedFollowHandler(RedisHandler):
 
         self.finish(re_data)
 
+class BreedCancelFollowHandler(RedisHandler):
+        # user cancel follow breed
+        @authenticated_async
+        async def post(self, breed_id, *args, **kwargs):
+            try:
+                re_data = {}
+                u_id =self.current_user.id
+                breed = await self.application.objects.get(DogBreed, id=int(breed_id))
+                follow = await self.application.objects.execute(DogFollower.delete().where((DogFollower.User_id == u_id) & ( DogFollower.Breed_id == breed.id)))
+                #re_data["id"] = follow.id
+                re_data = "success"
+                # update number
+                breed.FollowerNum -= 1
+                await self.application.objects.update(breed)
+
+            except DogBreed.DoesNotExist as e:
+                self.set_status(404)
+            except DogFollower.Exception:
+                self.set_status(500)
+
+            self.finish(re_data)
+
+class BreedLikeHandler(RedisHandler):
+    # user adds like/dislike
+    @authenticated_async
+    async def post(self, breed_id, *args, **kwargs):
+        try:
+            re_data = {}
+            breed = await self.application.objects.get(DogBreed, id=int(breed_id))
+            # check in the set
+            flag = self.redis_conn.sismember("breed_{}".format(breed_id),"user_{}".format(self.current_user.id))
+            # user has liked
+            if flag :
+                # remove recode
+                self.redis_conn.srem("breed_{}".format(breed_id),"user_{}".format(self.current_user.id))
+                re_data['has_liked'] = 'false'
+            # user has not liked
+            else:
+                # add record
+                self.redis_conn.sadd("breed_{}".format(breed_id),"user_{}".format(self.current_user.id))
+                re_data['has_liked'] = 'true'
+
+        except DogBreed.DoesNotExist as e:
+            self.set_status(404)
+
+
+        self.finish(re_data)
+
+    # get like/dislike number
+    @authenticated_async
+    async def get(self, breed_id, *args, **kwargs):
+        try:
+            re_data = {}
+            breed = await self.application.objects.get(DogBreed, id=int(breed_id))
+            re_data['has_liked'] = self.redis_conn.sismember("breed_{}".format(breed_id), "user_{}".format(self.current_user.id))
+            re_data['like_num'] = self.redis_conn.scard("breed_{}".format(breed_id))
+
+        except DogBreed.DoesNotExist as e:
+            self.set_status(404)
+
+        self.finish(re_data)
 
