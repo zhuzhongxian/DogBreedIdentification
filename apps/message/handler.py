@@ -28,8 +28,22 @@ class MessageHandler(RedisHandler):
                 "message":message.Message,
                 "message_type":message.MessageType,
                 "parent_content":message.ParentContent,
-                "add_time":message.add_time.strftime("%Y-%m-%d %H:%M:%S")
+                "add_time":message.add_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "id": message.id
             })
 
         self.finish(json.dumps(re_data))
+
+class DeleteMessageHandler(RedisHandler):
+
+    # delete messages
+    @authenticated_async
+    async def delete(self, message_id, *args, **kwargs):
+        re_data = {}
+        type_list = self.get_query_arguments("message_type", [])
+        await self.application.objects.execute(Message.delete().where(Message.id == message_id))
+
+        re_data = 'success'
+
+        self.finish(re_data)
 

@@ -1,5 +1,5 @@
 from wtforms_tornado import Form
-from wtforms import StringField
+from wtforms import StringField,FileField
 from wtforms.validators import DataRequired
 
 class AdminLoginForm(Form):
@@ -22,3 +22,4 @@ class ChangeBreedForm(Form):
     dog_life_span = StringField("寿命")
     dog_price = StringField("价格")
     dog_desc = StringField("品种简介")
+    dog_image = FileField("封面图")

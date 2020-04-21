@@ -12,6 +12,8 @@ OPERATION_TYPE = (
     (2,"删除账号"),
     (3,"修改详情"),
     (4,"删除评论"),
+    (5,"删除详情"),
+    (6,"添加详情"),
 )
 
 class AdminLog(BaseModel):

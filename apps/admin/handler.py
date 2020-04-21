@@ -114,8 +114,45 @@ class AdminBreedsHandler(AdminRedisHandler):
                     "id":breed.id,
                     "dog_name":breed.DogName,
                     "dog_origin":breed.DogOrigin,
-                    "dog_image":"{}/media/{}".format(self.settings["SITE_URL"],breed.DogImage)
+                    "dog_image":"{}/media/{}".format(self.settings["SITE_URL"],breed.DogImage),
+                    "dog_search_num": breed.SearchNum,
+                    "dog_follower_num": breed.FollowerNum,
+                    "dog_comment_num": breed.CommentNum
                 })
+        self.finish(json.dumps(re_data))
+
+    # add a breed
+    async def post(self, *args, **kwargs):
+        re_data = {}
+        token = self.request.headers.get("sessionid", None)
+        if not self.redis_conn.get(token):
+            self.set_status(400)
+        else:
+            admin_id = token.split("_")
+            param = self.request.body.decode("utf-8")
+            param = json.loads(param)
+            form = ChangeBreedForm.from_json(param)
+            if form.validate():
+                iden = int(form.dog_identifier.data)
+
+                await self.application.objects.create(DogBreed, DogIdentifier = iden,
+                DogName = form.dog_name.data,
+                DogAlias = form.dog_alias.data,
+                DogEngName = form.dog_eng_name.data,
+                DogOrigin = form.dog_origin.data,
+                DogWeight = form.dog_weight.data,
+                DogHight = form.dog_hight.data,
+                DogLifeSpan = form.dog_life_span.data,
+                DogPrice = form.dog_price.data,
+                DogImage = "define.png",
+                DogDesc = form.dog_desc.data,)
+                await self.application.objects.create(AdminLog, Admin=admin_id[0], OperationType=6)
+
+            else:
+                self.set_status(400)
+                for field in form.errors:
+                    re_data[field] = form.errors[field][0]
+
         self.finish(json.dumps(re_data))
 
 class ManageBreedsHandler(AdminRedisHandler):
@@ -180,6 +217,22 @@ class ManageBreedsHandler(AdminRedisHandler):
                     re_data[field] = form.errors[field][0]
         self.finish(re_data)
 
+    # delete breeds info
+    async def delete(self, breed_id, *args, **kwargs):
+        re_data = {}
+        token = self.request.headers.get("sessionid", None)
+        if not self.redis_conn.get(token):
+            re_data["notlogin"] = "true"
+            self.set_status(400)
+        else:
+            admin_id = token.split("_")
+
+            await self.application.objects.create(AdminLog, Admin=admin_id[0], OperationType=5)
+            await self.application.objects.execute(DogBreed.delete().where(DogBreed.id == breed_id))
+            re_data["del"] = "success"
+
+        self.finish(re_data)
+
 class ManageImageHandler(AdminRedisHandler):
     # get image
     async def get(self, breed_id, *args, **kwargs):
@@ -211,7 +264,7 @@ class ManageImageHandler(AdminRedisHandler):
                 for meta in files_meta:
                     filename = meta["filename"]
                     end = filename.split(".")
-                    new_filename = "{filename}.{end}".format(filename=breed_id,end=end[1])
+                    new_filename = "{filename}.{end}".format(filename=breed.DogIdentifier,end=end[1])
                     file_path = os.path.join(self.settings["MEDIA_ROOT"], new_filename)
                     async with aiofiles.open(file_path,'wb') as f:
                         await f.write(meta['body'])

@@ -194,7 +194,7 @@ class BreedCommentHandler(RedisHandler):
             breed_comments = await self.application.objects.execute(BreedComment.select(BreedComment, User.id,User.NickName,User.HeadUrl).join(User, on=(User.id == BreedComment.User_id)).where(BreedComment.Breed_id == breed,BreedComment.ParentComment.is_null(True)).order_by(BreedComment.add_time.desc()))
 
             for item in breed_comments:
-                print(item.User.NickName)
+
                 item.User.HeadUrl = "{}/media/{}".format(self.settings["SITE_URL"], item.User.HeadUrl)
                 has_liked = False
                 try:
@@ -253,16 +253,12 @@ class CommentReplyHandler(RedisHandler):
     async def get(self, comment_id, *args, **kwargs):
         re_data = []
 
-        #author = User.alias("author")
-        relyed_user = User.alias("relyed_user")
         comment_replys = await self.application.objects.execute(
-            BreedComment.select(BreedComment,User.id,User.NickName,User.HeadUrl,relyed_user.id,relyed_user.NickName).join(User, on=User.id == BreedComment.User_id).join(relyed_user, on=relyed_user.id == BreedComment.ReplyUser_id).where(
-                BreedComment.ParentComment_id == int(comment_id)))
-        #comment_replys = await self.application.objects.execute(BreedComment.select(BreedComment, User.,relyed_user).join(author, on=(author.id==BreedComment.User_id )).join(relyed_user, on=(relyed_user.id==BreedComment.ReplyUser_id)).where(BreedComment.ParentComment_id == int(comment_id)))
-        #comment_replys = await self.application.objects.execute(BreedComment.select(BreedComment,author.id,author.NickName,author.HeadUrl,relyed_user.id,relyed_user.NickName).join(author,on=author.id==BreedComment.User_id).switch(BreedComment).join(relyed_user,on=relyed_user.id==BreedComment.ReplyUser_id).where(BreedComment.ParentComment_id==int(comment_id)))
+            BreedComment.select(BreedComment, User.id, User.NickName, User.HeadUrl).join(User, on=User.id == BreedComment.User_id).where(
+                BreedComment.ParentComment_id == int(comment_id)).order_by(BreedComment.id.asc()))
 
         for item in comment_replys:
-            #print(item.author)
+            reply_user = await self.application.objects.get(User,id=item.ReplyUser_id)
             item_dict = {
                 #"user":model_to_dict(item.User),
                 "author":{
@@ -271,8 +267,8 @@ class CommentReplyHandler(RedisHandler):
                   "head_url":"{}/media/{}".format(self.settings["SITE_URL"], item.User.HeadUrl)
                 },
                 "relyed_user":{
-                  "id":  item.User.id,
-                  "nick_name":item.User.NickName
+                  "id":  reply_user.id,
+                  "nick_name":reply_user.NickName
                 },
                 "content":item.Content,
                 "reply_num":item.ReplyNum,
